@@ -262,6 +262,7 @@ def _run_generate_job(job_id: str, config: dict[str, Any]) -> None:
             "article_count": result.article_count,
             "candidate_count": result.candidate_count,
             "llm_used": result.llm_used,
+            "llm_mode": result.llm_mode,
             "config_summary": {
                 "recent_hours": int(config.get("runtime", {}).get("recent_hours", 168)),
                 "global_limit": int(config.get("runtime", {}).get("article_limit_per_source", 10)),

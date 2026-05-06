@@ -11,7 +11,7 @@ from ai_news_agent.pipeline import DailyNewsPipeline
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="生成每日 AI 资讯 docx 日报。")
     parser.add_argument("--config", type=str, default=None, help="自定义配置文件路径。")
-    parser.add_argument("--skip-llm", action="store_true", help="跳过 Qwen API，使用规则摘要。")
+    parser.add_argument("--skip-llm", action="store_true", help="跳过大模型 API，使用规则摘要。")
     parser.add_argument("--max-items-per-section", type=int, default=None, help="每个模块最多保留的资讯数量。")
     return parser.parse_args()
 

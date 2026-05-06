@@ -1,6 +1,7 @@
 const initialConfig = JSON.parse(document.getElementById("initial-config").textContent);
 
 const state = {
+  configTemplate: initialConfig,
   lastSavedSnapshot: snapshotConfig(initialConfig),
   generating: false,
 };
@@ -29,7 +30,8 @@ const els = {
   resultPanel: document.getElementById("result-panel"),
 };
 
-function renderConfig(config) {
+function renderConfig(config, options = {}) {
+  state.configTemplate = structuredClone(config);
   document.getElementById("start_date").value = config.runtime.start_date || "";
   document.getElementById("end_date").value = config.runtime.end_date || "";
   document.getElementById("recent_hours").value = config.runtime.recent_hours || 168;
@@ -46,7 +48,9 @@ function renderConfig(config) {
   config.sources.forEach((source, index) => {
     els.sourceList.appendChild(createSourceCard(source, index));
   });
-  updateDirtyIndicator();
+  if (options.updateDirty !== false) {
+    updateDirtyIndicator();
+  }
 }
 
 function createSourceCard(source, index) {
@@ -220,7 +224,7 @@ function createSourceCard(source, index) {
 }
 
 function readConfigFromForm() {
-  const config = structuredClone(initialConfig);
+  const config = structuredClone(state.configTemplate);
 
   config.runtime.start_date = document.getElementById("start_date").value || null;
   config.runtime.end_date = document.getElementById("end_date").value || null;
@@ -315,7 +319,8 @@ async function saveConfig(showMessage = true) {
     throw new Error("配置保存失败");
   }
   const data = await response.json();
-  state.lastSavedSnapshot = snapshotConfig(data.config);
+  renderConfig(data.config, { updateDirty: false });
+  state.lastSavedSnapshot = snapshotConfig(readConfigFromForm());
   if (showMessage) {
     setActionStatus(`配置已保存：${data.saved_at}`);
   }
@@ -404,7 +409,7 @@ function renderResult(data) {
   els.resultTime.textContent = data.generated_at;
   els.resultCandidates.textContent = `${data.candidate_count} 条`;
   els.resultArticles.textContent = `${data.article_count} 条`;
-  els.resultMode.textContent = data.llm_used ? "Qwen API" : "规则摘要";
+  els.resultMode.textContent = data.llm_mode || (data.llm_used ? "大模型 API" : "规则摘要");
   els.configSummary.textContent = formatConfigSummary(data.config_summary || {});
 
   els.downloadRow.innerHTML = "";
@@ -517,7 +522,26 @@ function snapshotConfig(config) {
     }
     return cloned;
   });
-  return JSON.stringify(normalized);
+  return stableStringify(normalized);
+}
+
+function stableStringify(value) {
+  return JSON.stringify(sortForSnapshot(value));
+}
+
+function sortForSnapshot(value) {
+  if (Array.isArray(value)) {
+    return value.map(sortForSnapshot);
+  }
+  if (value && typeof value === "object") {
+    return Object.keys(value)
+      .sort()
+      .reduce((result, key) => {
+        result[key] = sortForSnapshot(value[key]);
+        return result;
+      }, {});
+  }
+  return value;
 }
 
 function parseList(value) {

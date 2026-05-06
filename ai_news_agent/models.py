@@ -51,6 +51,7 @@ class PipelineResult:
     candidate_count: int
     article_count: int
     llm_used: bool
+    llm_mode: str
     started_at: datetime
     finished_at: datetime
     log_path: Path

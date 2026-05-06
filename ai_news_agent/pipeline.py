@@ -68,7 +68,7 @@ class DailyNewsPipeline:
 
         selected_for_analysis = self._select_for_analysis(deduplicated, filtering)
 
-        llm_stage_text = "正在调用 Qwen 生成中文摘要、翻译英文内容并分类..." if self.analyzer.llm_available else "未启用 Qwen，正在使用规则模式生成摘要..."
+        llm_stage_text = "正在调用大模型 API 生成中文摘要、翻译英文内容并分类..." if self.analyzer.llm_available else "未启用大模型 API，正在使用规则模式生成摘要..."
         self._report_progress(58, "analyzing", llm_stage_text)
         analyzed_articles = self.analyzer.analyze_articles(selected_for_analysis)
         quality_threshold = int(self.config.get("quality", {}).get("min_score", 68))
@@ -104,9 +104,10 @@ class DailyNewsPipeline:
             "candidate_count": len(raw_articles),
             "article_count": sum(len(section.articles) for section in sections),
             "recent_hours": recent_hours,
-            "llm_mode": "Qwen API" if self.analyzer.llm_available else "规则摘要",
+            "llm_mode": self.analyzer.mode_label,
         }
         self._report_progress(92, "exporting", "正在生成 Word、Markdown 和统计文件...")
+        metadata["llm_mode"] = self.analyzer.mode_label
         self.generator.generate(output_path, sections, metadata)
         self.markdown_generator.generate(markdown_path, sections, metadata)
         write_source_stats(stats_path, metadata, source_stats)
@@ -125,6 +126,7 @@ class DailyNewsPipeline:
             candidate_count=len(raw_articles),
             article_count=sum(len(section.articles) for section in sections),
             llm_used=self.analyzer.llm_available,
+            llm_mode=self.analyzer.mode_label,
             started_at=started_at,
             finished_at=finished_at,
             log_path=self.log_path,

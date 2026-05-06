@@ -27,12 +27,20 @@ quality:
   min_score: 10
 llm:
   enabled: true
-  provider: qwen
-  model: qwen-turbo-latest
-  api_key_env: DASHSCOPE_API_KEY
+  provider: openai_compatible
+  model: ''
+  model_env: LLM_MODEL
+  api_key_env: LLM_API_KEY
+  base_url_env: LLM_BASE_URL
+  api_url_env: LLM_API_URL
   temperature: 0.2
   top_p: 0.8
-  max_workers: 5
+  max_tokens: 2048
+  timeout_seconds: 120
+  max_retries: 6
+  requests_per_minute: 12
+  max_workers: 2
+  max_concurrency: 2
 document:
   title: 每日AI资讯摘编
   subtitle_prefix: 内部参考
